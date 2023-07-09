@@ -1,11 +1,16 @@
 package ru.ewm.service.events.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import ru.ewm.service.events.model.Location;
-import org.springframework.beans.factory.annotation.Value;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Getter
@@ -32,15 +37,10 @@ public class NewEventDto {
     @NotNull
     private Location location;
 
-    @Value("false")
-    private Boolean paid;
 
-    @PositiveOrZero
-    @Value("0")
-    private Integer participantLimit;
-
-    @Value("true")
-    private Boolean requestModeration;
+    private boolean paid;
+    private int participantLimit;
+    private boolean requestModeration = true;
 
     @NotBlank
     @Size(min = 3, max = 120)

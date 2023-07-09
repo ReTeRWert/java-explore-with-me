@@ -4,7 +4,6 @@ import dto.EndpointHitDto;
 import dto.ViewStatsDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -49,11 +48,10 @@ public class StatServiceImpl implements StatService {
         }
     }
 
-    @Transactional
     @Override
     public EndpointHitDto saveNewEndpoint(EndpointHitDto newEndpoint) {
         EndpointHit endpointHit = EndpointMapper.toEndpointHit(newEndpoint);
 
-        return EndpointMapper.toEndpointHitDto(endpointRepository.save(endpointHit));
+        return EndpointMapper.toEndpointHitDto(endpointRepository.saveAndFlush(endpointHit));
     }
 }

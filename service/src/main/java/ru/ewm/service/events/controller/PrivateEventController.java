@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.ewm.service.events.EventService;
 import ru.ewm.service.events.dto.FullEventDto;
 import ru.ewm.service.events.dto.NewEventDto;
-import ru.ewm.service.events.dto.ShortEventDto;
 import ru.ewm.service.events.dto.UpdateEventUserRequest;
 
 import javax.validation.Valid;
@@ -26,8 +25,8 @@ public class PrivateEventController {
 
     @GetMapping
     public List<FullEventDto> getEventsForPrivate(@PathVariable Long userId,
-                                                   @RequestParam(defaultValue = "0") @PositiveOrZero Long from,
-                                                   @RequestParam(defaultValue = "10") @Positive Integer size) {
+                                                  @RequestParam(defaultValue = "0") @PositiveOrZero Long from,
+                                                  @RequestParam(defaultValue = "10") @Positive Integer size) {
 
         return eventService.getEventsForPrivate(userId, from, size);
     }

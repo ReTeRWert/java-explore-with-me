@@ -19,8 +19,10 @@ public class ShortEventDto {
     private String annotation;
     private CategoryDto category;
     private int confirmedRequests;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
+
     private Long id;
     private ShortUserDto initiator;
     private Boolean paid;

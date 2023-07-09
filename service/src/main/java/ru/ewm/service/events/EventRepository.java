@@ -39,12 +39,12 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("SELECT e " +
             "FROM Event e " +
-            "WHERE (:categories is null OR e.category.id IN :categories) " +
-            "AND ((cast(:start as timestamp) Is null OR cast(:end as timestamp) Is null) " +
-            "OR (cast(:start as timestamp) Is Not Null AND cast(:end as timestamp) Is not null " +
+            "WHERE (:categories IS NULL OR e.category.id IN (:categories)) " +
+            "AND ((CAST(:start AS timestamp) IS NULL OR cast(:end AS timestamp) IS NULL) " +
+            "OR (CAST(:start AS timestamp) IS NOT NULL AND CAST(:end AS timestamp) IS NOT NULL " +
             "AND e.eventDate BETWEEN :start AND :end)) " +
-            "AND (:text is null OR (lower(e.annotation) like %:text% or lower(e.description) like %:text%)) " +
-            "AND e.paid = :paid")
+            "AND (:text IS NULL OR (LOWER(e.annotation) LIKE %:text% OR LOWER(e.description) LIKE %:text%)) " +
+            "AND (:paid IS NULL OR e.paid = :paid)")
     List<Event> searchEventsByPublic(@Param("text") String text,
                                      @Param("categories") List<Long> categories,
                                      @Param("start") LocalDateTime start,

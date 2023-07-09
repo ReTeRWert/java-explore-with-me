@@ -2,8 +2,8 @@ package ru.ewm.service.events;
 
 import ru.ewm.service.events.dto.*;
 import ru.ewm.service.events.model.Event;
-import ru.ewm.service.util.SortTypes;
 import ru.ewm.service.util.EventState;
+import ru.ewm.service.util.SortTypes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -29,7 +29,7 @@ public interface EventService {
                                             LocalDateTime rangeEnd, Boolean onlyAvailable, SortTypes sort, Long from,
                                             Integer size, String ip);
 
-    public FullEventDto getEventByIdForPublic(Long id, HttpServletRequest request);
+    FullEventDto getEventByIdForPublic(Long id, HttpServletRequest request);
 
     Event updateEvent(Event eventToUpdate, UpdateEventRequest updateEventRequest);
 

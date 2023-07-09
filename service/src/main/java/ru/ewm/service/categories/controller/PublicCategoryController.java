@@ -23,6 +23,7 @@ public class PublicCategoryController {
     @GetMapping
     public List<CategoryDto> getAllCategories(@RequestParam(value = "from", defaultValue = "0") @PositiveOrZero Long from,
                                               @RequestParam(value = "size", defaultValue = "10") @Positive Integer size) {
+
         log.info("get all categories.");
 
         return categoryService.getAllCategories(from, size);
@@ -30,6 +31,7 @@ public class PublicCategoryController {
 
     @GetMapping("/{catId}")
     public CategoryDto getCategoryById(@PathVariable Long catId) {
+
         log.info("get category by id: {}", catId);
 
         return categoryService.getCategoryById(catId);

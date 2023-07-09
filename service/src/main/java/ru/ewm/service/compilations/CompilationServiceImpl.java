@@ -34,7 +34,7 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto addCompilation(NewCompilationDto newCompilationDto) {
-                List<Event> events;
+        List<Event> events;
         List<Long> eventIds = newCompilationDto.getEvents();
 
         if (eventIds != null && !eventIds.isEmpty()) {
@@ -93,6 +93,7 @@ public class CompilationServiceImpl implements CompilationService {
         CompilationDto updatedCompilationDto = CompilationMapper.toCompilationDto(compilationRepository.save(compilationToUpdate));
 
         Map<Long, Long> views = eventService.getStats(compilationToUpdate.getEvents(), false);
+
         if (!views.isEmpty()) {
             updatedCompilationDto.getEvents().forEach(e -> e.setViews(views.get(e.getId())));
         }

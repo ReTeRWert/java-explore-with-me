@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.beans.factory.annotation.Value;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -18,7 +17,6 @@ import java.util.List;
 public class NewCompilationDto {
 
     private List<Long> events;
-
     private Boolean pinned = false;
 
     @NotNull

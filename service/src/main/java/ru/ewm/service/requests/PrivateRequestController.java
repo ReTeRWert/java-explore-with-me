@@ -41,7 +41,7 @@ public class PrivateRequestController {
 
     @GetMapping("/events/{eventId}/requests")
     public List<RequestDto> getEventRequests(@PathVariable Long userId,
-                                                   @PathVariable Long eventId) {
+                                             @PathVariable Long eventId) {
 
         return requestService.getEventRequests(userId, eventId);
     }

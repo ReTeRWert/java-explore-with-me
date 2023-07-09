@@ -9,9 +9,9 @@ import ru.ewm.service.requests.dto.RequestDto;
 import ru.ewm.service.requests.dto.RequestStatusUpdateRequest;
 import ru.ewm.service.requests.dto.RequestStatusUpdateResult;
 import ru.ewm.service.users.User;
+import ru.ewm.service.util.EventState;
 import ru.ewm.service.util.ExistValidator;
 import ru.ewm.service.util.RequestState;
-import ru.ewm.service.util.EventState;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,7 +28,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<RequestDto> getUserRequests(Long userId) {
-        List<Request> requests = requestRepository.findAllByIdIs(userId);
+        List<Request> requests = requestRepository.findAllByRequesterIdIs(userId);
 
         return requests.stream()
                 .map(RequestMapper::toRequestDto)
@@ -55,23 +55,13 @@ public class RequestServiceImpl implements RequestService {
             throw new InvalidOperationException("Event is not published.");
         }
 
-/*
-       List<Request> confirmedRequest = findConfirmedRequests(List.of(event));
-*/
 
+        List<Long> confirmedRequests = findConfirmedRequestsById(eventId);
 
-       /* if (event.getParticipantLimit() != 0 && confirmedRequest.size() == event.getParticipantLimit()) {
-            throw new InvalidOperationException("Limit is over.");
+        if (event.getParticipantLimit() != 0 && confirmedRequests.size() == event.getParticipantLimit()) {
+            throw new InvalidOperationException("Limit over");
         }
-*/
-        List<Long> confirmedRequests = findConfirmedRequestsById(event.getId());
 
-        if (event.getParticipantLimit() != 0) {
-            int count = requestRepository.getCountConfirmedRequest(eventId, RequestState.CONFIRMED);
-            if ( count >= event.getParticipantLimit()) {
-                throw new InvalidOperationException("Limit is over.");
-            }
-        }
 
         Request newRequest = new Request();
 
@@ -89,7 +79,12 @@ public class RequestServiceImpl implements RequestService {
     }
 
     private List<Long> findConfirmedRequestsById(Long eventId) {
-        return requestRepository.findAllByEventIdIsAndStatusIs(eventId, RequestState.CONFIRMED);
+
+        List<Request> requests = requestRepository.findAllByEventIdIsAndStatusIs(eventId, RequestState.CONFIRMED);
+
+        return requests.stream()
+                .map(Request::getId)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -136,7 +131,7 @@ public class RequestServiceImpl implements RequestService {
             throw new InvalidOperationException("Request does not need confirmation.");
         }
 
-        int  confirmedRequests = findConfirmedRequests(List.of(event)).size();
+        int confirmedRequests = findConfirmedRequests(List.of(event)).size();
 
         List<Request> requestsToUpdate = requestRepository.findAllByIdIn(request.getRequestIds());
         RequestStatusUpdateResult requestStatusUpdateResult = new RequestStatusUpdateResult();

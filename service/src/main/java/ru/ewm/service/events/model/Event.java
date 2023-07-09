@@ -1,10 +1,10 @@
 package ru.ewm.service.events.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import ru.ewm.service.categories.Category;
 import ru.ewm.service.users.User;
 import ru.ewm.service.util.EventState;
@@ -30,8 +30,11 @@ public class Event {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @JsonFormat(pattern = "yyyy:MM:dd HH:mm:ss")
     private LocalDateTime createdOn;
     private String description;
+
+    @JsonFormat(pattern = "yyyy:MM:dd HH:mm:ss")
     private LocalDateTime eventDate;
 
     @ManyToOne(optional = false)
@@ -43,7 +46,10 @@ public class Event {
 
     private Boolean paid;
     private int participantLimit;
+
+    @JsonFormat(pattern = "yyyy:MM:dd HH:mm:ss")
     private LocalDateTime publishedOn;
+
     private Boolean requestModeration;
 
     @Enumerated(EnumType.STRING)

@@ -1,7 +1,6 @@
 package ru.ewm.service.requests;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import ru.ewm.service.events.model.Event;
 import ru.ewm.service.util.RequestState;
 
@@ -10,7 +9,7 @@ import java.util.Optional;
 
 public interface RequestRepository extends JpaRepository<Request, Long> {
 
-    List<Request> findAllByIdIs(Long userId);
+    List<Request> findAllByRequesterIdIs(Long userId);
 
     Optional<Request> findFirstByEventIdIsAndRequesterIdIs(Long eventId, Long requesterId);
 
@@ -20,11 +19,5 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     List<Request> findAllByIdIn(List<Long> requestIds);
 
-    @Query("SELECT COUNT(r.id) " +
-            "FROM Request r " +
-            "WHERE r.event.id = ?1 " +
-            "AND r.status = ?2")
-    Integer getCountConfirmedRequest(Long eventId, RequestState state);
-
-    List<Long>findAllByEventIdIsAndStatusIs(Long eventId, RequestState state);
+    List<Request> findAllByEventIdIsAndStatusIs(Long eventId, RequestState state);
 }

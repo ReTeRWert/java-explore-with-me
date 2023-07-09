@@ -12,7 +12,6 @@ import ru.ewm.service.exception.InvalidOperationException;
 import ru.ewm.service.util.ExistValidator;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service

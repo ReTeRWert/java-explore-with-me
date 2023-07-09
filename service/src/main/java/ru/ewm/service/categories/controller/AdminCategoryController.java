@@ -25,18 +25,18 @@ public class AdminCategoryController {
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryDto addCategory(@RequestBody @NotNull @Valid NewCategoryDto newCategoryDto) {
 
-      log.info("Adding new category: {}", newCategoryDto);
+        log.info("Adding new category: {}", newCategoryDto);
 
-      return adminCategoryService.addCategory(newCategoryDto);
+        return adminCategoryService.addCategory(newCategoryDto);
     }
 
     @PatchMapping("/{catId}")
     public CategoryDto updateCategory(@PathVariable Long catId,
                                       @RequestBody @NotNull @Valid NewCategoryDto updateCategory) {
 
-      log.info("Updating category: {}", updateCategory);
+        log.info("Updating category: {}", updateCategory);
 
-      return adminCategoryService.updateCategory(catId, updateCategory);
+        return adminCategoryService.updateCategory(catId, updateCategory);
     }
 
     @DeleteMapping("/{catId}")

@@ -14,7 +14,7 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class NewCategoryDto {
 
-    @NotBlank(message = "Name of the new category should not be blank.")
-    @Size(min = 1, max = 50, message = "Name of the category should be 1 to 50 characters.")
+    @NotBlank
+    @Size(min = 1, max = 50)
     private String name;
 }

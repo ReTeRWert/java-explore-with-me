@@ -1,6 +1,5 @@
 package ru.ewm.service.events;
 
-import ru.ewm.client.StatClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.ViewStatsDto;
 import lombok.RequiredArgsConstructor;
@@ -9,16 +8,20 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.ewm.client.StatClient;
 import ru.ewm.service.categories.Category;
 import ru.ewm.service.events.dto.*;
 import ru.ewm.service.events.model.Event;
-import ru.ewm.service.exception.*;
+import ru.ewm.service.exception.AccessException;
+import ru.ewm.service.exception.InvalidEventDateException;
+import ru.ewm.service.exception.InvalidOperationException;
+import ru.ewm.service.exception.NotFoundException;
 import ru.ewm.service.requests.Request;
 import ru.ewm.service.requests.RequestService;
 import ru.ewm.service.users.User;
+import ru.ewm.service.util.EventState;
 import ru.ewm.service.util.ExistValidator;
 import ru.ewm.service.util.SortTypes;
-import ru.ewm.service.util.EventState;
 import ru.ewm.service.util.StateAction;
 
 import javax.servlet.http.HttpServletRequest;
@@ -62,7 +65,7 @@ public class EventServiceImpl implements EventService {
         }
 
         for (FullEventDto event : fullEvents) {
-            Integer confirmedRequests = requestService.findConfirmedRequests(search).size();
+            Integer confirmedRequests = eventRepository.findConfirmedRequests(event.getId());
 
             if (confirmedRequests != null) {
                 event.setConfirmedRequests(confirmedRequests);
@@ -153,8 +156,8 @@ public class EventServiceImpl implements EventService {
         newEvent.setInitiator(initiator);
         newEvent.setState(EventState.PENDING);
         newEvent.setCreatedOn(LocalDateTime.now());
-
-        return EventMapper.toEventFullDto(eventRepository.save(newEvent));
+        Event check = eventRepository.save(newEvent);
+        return EventMapper.toEventFullDto(check);
     }
 
     @Override
@@ -221,8 +224,15 @@ public class EventServiceImpl implements EventService {
                                                    Integer size,
                                                    String ip) {
 
-        int startPage = Math.toIntExact(from / size);
-        Pageable pageable = PageRequest.of(startPage, size);
+        if (text != null) {
+            text = text.toLowerCase();
+        }
+
+        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+            throw new InvalidEventDateException("Start event cannot be after his end.");
+        }
+
+        PageRequest pageable = PageRequest.of(0, size);
         List<Event> foundEvents = eventRepository.searchEventsByPublic(text, categories, rangeStart, rangeEnd, paid, pageable);
 
         if (foundEvents.isEmpty()) {
@@ -341,16 +351,25 @@ public class EventServiceImpl implements EventService {
 
         Optional<LocalDateTime> start = events.stream()
                 .map(Event::getPublishedOn)
-                .filter(Objects::nonNull).min(LocalDateTime::compareTo);
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo);
+
         if (start.isEmpty()) {
             return new HashMap<>();
         }
+
         LocalDateTime timestamp = LocalDateTime.now();
-        List<Long> ids = events.stream().map(Event::getId).collect(Collectors.toList());
+
+        List<Long> ids = events.stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
 
         String startTime = start.get().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         String endTime = timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        List<String> uris = ids.stream().map(id -> "/events/" + id).collect(Collectors.toList());
+
+        List<String> uris = ids.stream()
+                .map(id -> "/events/" + id)
+                .collect(Collectors.toList());
 
         ResponseEntity<Object> response = statClient.getViewStats(startTime, endTime, uris, unique);
         List<ViewStatsDto> stats;
@@ -367,6 +386,7 @@ public class EventServiceImpl implements EventService {
         }
 
         Map<Long, Long> views = new HashMap<>();
+
         for (Long id : ids) {
 
             Optional<Long> viewsOptional = stats.stream()

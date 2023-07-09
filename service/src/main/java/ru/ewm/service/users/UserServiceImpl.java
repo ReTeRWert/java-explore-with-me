@@ -3,7 +3,6 @@ package ru.ewm.service.users;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.ewm.service.users.dto.FullUserDto;
@@ -19,13 +18,12 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
     @Override
     public List<FullUserDto> getUsers(List<Long> ids, Long from, Integer size) {
-        int startPage = Math.toIntExact(from/size);
-        PageRequest pageRequest = PageRequest.of(startPage, size);
 
         if (ids.isEmpty()) {
-            return getUsersEmpty(pageRequest);
+            return getUsersEmpty(size);
         }
 
         List<User> users = userRepository.findAllById(ids);
@@ -35,7 +33,10 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
-    private List<FullUserDto> getUsersEmpty(Pageable pageable) {
+    private List<FullUserDto> getUsersEmpty(Integer size) {
+
+        PageRequest pageable = PageRequest.of(0, size);
+
         Page<User> users = userRepository.findAll(pageable);
 
         return users.stream()

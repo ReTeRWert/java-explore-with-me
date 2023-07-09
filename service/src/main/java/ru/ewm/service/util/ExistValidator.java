@@ -28,27 +28,37 @@ public class ExistValidator {
 
     public User getUserIfExist(Long userId) {
         Optional<User> user = userRepository.findById(userId);
-        return user.orElseThrow(() -> new NotFoundException(userId, User.class.getSimpleName()));
+
+        return user.orElseThrow(()
+                -> new NotFoundException(userId, User.class.getSimpleName()));
     }
 
     public Event getEventIfExist(Long eventId) {
         Optional<Event> event = eventRepository.findById(eventId);
-        return event.orElseThrow(() -> new NotFoundException(eventId, Event.class.getSimpleName()));
+
+        return event.orElseThrow(() ->
+                new NotFoundException(eventId, Event.class.getSimpleName()));
     }
 
     public Category getCategoryIfExist(Long catId) {
         Optional<Category> category = categoryRepository.findById(catId);
-        return category.orElseThrow(() -> new NotFoundException(catId, Category.class.getSimpleName()));
+
+        return category.orElseThrow(()
+                -> new NotFoundException(catId, Category.class.getSimpleName()));
     }
 
     public Request getRequestIfExist(Long requestId) {
         Optional<Request> request = requestRepository.findById(requestId);
+
         return request
-                .orElseThrow(() -> new NotFoundException(requestId, Request.class.getSimpleName()));
+                .orElseThrow(()
+                        -> new NotFoundException(requestId, Request.class.getSimpleName()));
     }
 
     public Compilation getCompilationIfExist(Long compId) {
         Optional<Compilation> compilation = compilationRepository.findById(compId);
-        return compilation.orElseThrow(() -> new NotFoundException(compId, Compilation.class.getSimpleName()));
+
+        return compilation.orElseThrow(()
+                -> new NotFoundException(compId, Compilation.class.getSimpleName()));
     }
 }
