@@ -20,8 +20,8 @@ public class StatServiceImpl implements StatService {
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) throws ValidationException {
 
-        if (start.isAfter(end)) {
-            throw new ValidationException("Start date must be before end date.");
+        if (end.isAfter(start)) {
+            throw new ValidationException("End date must be before start date.");
         }
 
         if (uris != null) {
