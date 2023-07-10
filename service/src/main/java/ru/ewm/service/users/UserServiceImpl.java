@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.ewm.service.exception.NotFoundException;
 import ru.ewm.service.users.dto.FullUserDto;
 import ru.ewm.service.users.dto.NewUserDto;
 
@@ -60,5 +61,13 @@ public class UserServiceImpl implements UserService {
         }
 
         userRepository.deleteById(userId);
+    }
+
+    @Override
+    public User getUserIfExist(Long userId) {
+        Optional<User> user = userRepository.findById(userId);
+
+        return user.orElseThrow(()
+                -> new NotFoundException(userId, User.class.getSimpleName()));
     }
 }

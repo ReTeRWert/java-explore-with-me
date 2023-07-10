@@ -1,13 +1,13 @@
-package ru.ewm.service.events.controller;
+package ru.ewm.service.events;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.ewm.service.events.EventService;
 import ru.ewm.service.events.dto.FullEventDto;
 import ru.ewm.service.events.dto.UpdateEventAdminRequest;
-import ru.ewm.service.util.EventState;
+import ru.ewm.service.events.enums.EventState;
+import ru.ewm.service.events.searchParams.AdminSearchParams;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -35,7 +35,17 @@ public class AdminEventController {
                                                   @RequestParam(defaultValue = "0") @PositiveOrZero Long from,
                                                   @RequestParam(defaultValue = "10") @Positive Integer size) {
 
-        return eventService.searchEventsByAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
+        AdminSearchParams adminSearchParams = new AdminSearchParams(
+                categories,
+                rangeStart,
+                rangeEnd,
+                from,
+                size,
+                users,
+                states
+        );
+
+        return eventService.searchEventsByAdmin(adminSearchParams);
 
     }
 

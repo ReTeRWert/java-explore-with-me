@@ -4,8 +4,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import ru.ewm.service.events.enums.EventState;
 import ru.ewm.service.events.model.Event;
-import ru.ewm.service.util.EventState;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,7 +44,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "OR (CAST(:start AS timestamp) IS NOT NULL AND CAST(:end AS timestamp) IS NOT NULL " +
             "AND e.eventDate BETWEEN :start AND :end)) " +
             "AND (:text IS NULL OR (LOWER(e.annotation) LIKE %:text% OR LOWER(e.description) LIKE %:text%)) " +
-            "AND (:paid IS NULL OR e.paid = :paid)")
+            "AND (:paid IS NULL OR e.isPaid = :paid)")
     List<Event> searchEventsByPublic(@Param("text") String text,
                                      @Param("categories") List<Long> categories,
                                      @Param("start") LocalDateTime start,

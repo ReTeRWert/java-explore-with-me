@@ -9,9 +9,10 @@ import ru.ewm.service.categories.dto.CategoryDto;
 import ru.ewm.service.categories.dto.NewCategoryDto;
 import ru.ewm.service.events.EventRepository;
 import ru.ewm.service.exception.InvalidOperationException;
-import ru.ewm.service.util.ExistValidator;
+import ru.ewm.service.exception.NotFoundException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,7 +22,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
-    private final ExistValidator existValidator;
 
 
     @Override
@@ -33,7 +33,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto updateCategory(Long catId, NewCategoryDto updateCategory) {
-        Category category = existValidator.getCategoryIfExist(catId);
+        Category category = getCategoryIfExist(catId);
 
         category.setName(updateCategory.getName());
 
@@ -42,7 +42,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(Long catId) {
-        existValidator.getCategoryIfExist(catId);
+        getCategoryIfExist(catId);
 
         if (eventRepository.findEventByCategoryId(catId).size() != 0) {
             throw new InvalidOperationException("Cannot delete category with events.");
@@ -64,8 +64,16 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto getCategoryById(Long id) {
-        Category category = existValidator.getCategoryIfExist(id);
+        Category category = getCategoryIfExist(id);
 
         return CategoryMapper.toCategoryDto(category);
+    }
+
+    @Override
+    public Category getCategoryIfExist(Long catId) {
+        Optional<Category> category = categoryRepository.findById(catId);
+
+        return category.orElseThrow(()
+                -> new NotFoundException(catId, Category.class.getSimpleName()));
     }
 }

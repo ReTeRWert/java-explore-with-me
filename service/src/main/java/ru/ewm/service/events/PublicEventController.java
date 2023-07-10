@@ -1,12 +1,12 @@
-package ru.ewm.service.events.controller;
+package ru.ewm.service.events;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.ewm.service.events.EventService;
 import ru.ewm.service.events.dto.FullEventDto;
-import ru.ewm.service.util.SortTypes;
+import ru.ewm.service.events.enums.SortTypes;
+import ru.ewm.service.events.searchParams.PublicSearchParams;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
@@ -38,8 +38,20 @@ public class PublicEventController {
 
         String ip = request.getRemoteAddr();
 
-        return eventService.searchEventsByPublic(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort,
-                from, size, ip);
+        PublicSearchParams searchParams = new PublicSearchParams(
+                categories,
+                rangeStart,
+                rangeEnd,
+                from,
+                size,
+                text,
+                paid,
+                onlyAvailable,
+                sort,
+                ip
+        );
+
+        return eventService.searchEventsByPublic(searchParams);
     }
 
     @GetMapping("/{id}")

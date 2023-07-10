@@ -6,9 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.ewm.service.categories.dto.CategoryDto;
+import ru.ewm.service.events.enums.EventState;
 import ru.ewm.service.events.model.Location;
 import ru.ewm.service.users.dto.ShortUserDto;
-import ru.ewm.service.util.EventState;
 
 import java.time.LocalDateTime;
 

@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.ewm.service.events.model.Event;
 import ru.ewm.service.users.User;
-import ru.ewm.service.util.RequestState;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;

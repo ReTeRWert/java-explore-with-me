@@ -2,7 +2,6 @@ package ru.ewm.service.requests;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.ewm.service.events.model.Event;
-import ru.ewm.service.util.RequestState;
 
 import java.util.List;
 import java.util.Optional;

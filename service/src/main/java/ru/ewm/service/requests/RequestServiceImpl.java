@@ -3,15 +3,16 @@ package ru.ewm.service.requests;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.ewm.service.events.EventRepository;
+import ru.ewm.service.events.enums.EventState;
 import ru.ewm.service.events.model.Event;
 import ru.ewm.service.exception.InvalidOperationException;
+import ru.ewm.service.exception.NotFoundException;
 import ru.ewm.service.requests.dto.RequestDto;
 import ru.ewm.service.requests.dto.RequestStatusUpdateRequest;
 import ru.ewm.service.requests.dto.RequestStatusUpdateResult;
 import ru.ewm.service.users.User;
-import ru.ewm.service.util.EventState;
-import ru.ewm.service.util.ExistValidator;
-import ru.ewm.service.util.RequestState;
+import ru.ewm.service.users.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +25,8 @@ import java.util.stream.Collectors;
 public class RequestServiceImpl implements RequestService {
 
     private final RequestRepository requestRepository;
-    private final ExistValidator existValidator;
+    private final UserService userService;
+    private final EventRepository eventRepository;
 
     @Override
     public List<RequestDto> getUserRequests(Long userId) {
@@ -37,8 +39,9 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public RequestDto addRequest(Long userId, Long eventId) {
-        User requester = existValidator.getUserIfExist(userId);
-        Event event = existValidator.getEventIfExist(eventId);
+        User requester = userService.getUserIfExist(userId);
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException(eventId, Event.class.getSimpleName()));
 
         Optional<Request> optionalRequest = requestRepository
                 .findFirstByEventIdIsAndRequesterIdIs(event.getId(), requester.getId());
@@ -69,7 +72,7 @@ public class RequestServiceImpl implements RequestService {
         newRequest.setRequester(requester);
         newRequest.setEvent(event);
 
-        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+        if (!event.getIsRequestModeration() || event.getParticipantLimit() == 0) {
             newRequest.setStatus(RequestState.CONFIRMED);
         } else {
             newRequest.setStatus(RequestState.PENDING);
@@ -89,8 +92,8 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public RequestDto cancelRequest(Long userId, Long requestId) {
-        User requester = existValidator.getUserIfExist(userId);
-        Request request = existValidator.getRequestIfExist(requestId);
+        User requester = userService.getUserIfExist(userId);
+        Request request = getRequestIfExist(requestId);
 
         if (!request.getRequester().equals(requester)) {
             throw new InvalidOperationException("This user cannot cancel a request.");
@@ -103,8 +106,9 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<RequestDto> getEventRequests(Long userId, Long eventId) {
-        User initiator = existValidator.getUserIfExist(userId);
-        Event event = existValidator.getEventIfExist(eventId);
+        User initiator = userService.getUserIfExist(userId);
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException(eventId, Event.class.getSimpleName()));
 
         if (!event.getInitiator().equals(initiator)) {
             throw new InvalidOperationException("User is not event initiator");
@@ -120,14 +124,15 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public RequestStatusUpdateResult updateRequests(Long userId, Long eventId, RequestStatusUpdateRequest request) {
-        User initiator = existValidator.getUserIfExist(userId);
-        Event event = existValidator.getEventIfExist(eventId);
+        User initiator = userService.getUserIfExist(userId);
+        Event event = eventRepository.findById(eventId).orElseThrow(() ->
+                new NotFoundException(eventId, Event.class.getSimpleName()));
 
         if (!event.getInitiator().equals(initiator)) {
             throw new InvalidOperationException("User is not event initiator.");
         }
 
-        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+        if (!event.getIsRequestModeration() || event.getParticipantLimit() == 0) {
             throw new InvalidOperationException("Request does not need confirmation.");
         }
 
@@ -189,5 +194,14 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public List<Request> findConfirmedRequests(List<Event> events) {
         return requestRepository.findAllByEventInAndStatusIs(events, RequestState.CONFIRMED);
+    }
+
+    @Override
+    public Request getRequestIfExist(Long requestId) {
+        Optional<Request> request = requestRepository.findById(requestId);
+
+        return request
+                .orElseThrow(()
+                        -> new NotFoundException(requestId, Request.class.getSimpleName()));
     }
 }

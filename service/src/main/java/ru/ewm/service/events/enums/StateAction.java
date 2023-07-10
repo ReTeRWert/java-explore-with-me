@@ -1,4 +1,4 @@
-package ru.ewm.service.util;
+package ru.ewm.service.events.enums;
 
 public enum StateAction {
     PUBLISH_EVENT,

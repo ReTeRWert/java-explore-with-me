@@ -6,8 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.ewm.service.categories.Category;
+import ru.ewm.service.events.enums.EventState;
 import ru.ewm.service.users.User;
-import ru.ewm.service.util.EventState;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -44,13 +44,13 @@ public class Event {
     @Embedded
     private Location location;
 
-    private Boolean paid;
+    private Boolean isPaid;
     private int participantLimit;
 
     @JsonFormat(pattern = "yyyy:MM:dd HH:mm:ss")
     private LocalDateTime publishedOn;
 
-    private Boolean requestModeration;
+    private Boolean isRequestModeration;
 
     @Enumerated(EnumType.STRING)
     private EventState state;

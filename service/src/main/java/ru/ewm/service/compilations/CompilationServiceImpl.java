@@ -12,13 +12,14 @@ import ru.ewm.service.events.EventRepository;
 import ru.ewm.service.events.EventService;
 import ru.ewm.service.events.dto.ShortEventDto;
 import ru.ewm.service.events.model.Event;
+import ru.ewm.service.exception.NotFoundException;
 import ru.ewm.service.requests.Request;
 import ru.ewm.service.requests.RequestService;
-import ru.ewm.service.util.ExistValidator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,7 +31,6 @@ public class CompilationServiceImpl implements CompilationService {
     private final EventService eventService;
     private final RequestService requestService;
     private final EventRepository eventRepository;
-    private final ExistValidator existValidator;
 
     @Override
     public CompilationDto addCompilation(NewCompilationDto newCompilationDto) {
@@ -75,10 +75,10 @@ public class CompilationServiceImpl implements CompilationService {
             throw new IllegalArgumentException("Title name is too long");
         }
 
-        Compilation compilationToUpdate = existValidator.getCompilationIfExist(compId);
+        Compilation compilationToUpdate = getCompilationIfExist(compId);
 
         if (updateRequest.getPinned() != null) {
-            compilationToUpdate.setPinned(updateRequest.getPinned());
+            compilationToUpdate.setIsPinned(updateRequest.getPinned());
         }
 
         if (updateRequest.getTitle() != null) {
@@ -111,7 +111,7 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public void deleteCompilation(Long compId) {
-        existValidator.getCompilationIfExist(compId);
+        getCompilationIfExist(compId);
         compilationRepository.deleteById(compId);
     }
 
@@ -120,7 +120,7 @@ public class CompilationServiceImpl implements CompilationService {
         int startPage = Math.toIntExact(from / size);
         Pageable pageable = PageRequest.of(startPage, size);
 
-        List<Compilation> compilations = compilationRepository.findCompilationByPinnedIs(pinned, pageable);
+        List<Compilation> compilations = compilationRepository.findCompilationByIsPinnedIs(pinned, pageable);
 
         return compilations.stream()
                 .map(CompilationMapper::toCompilationDto)
@@ -129,7 +129,7 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto getCompilation(Long compId) {
-        Compilation compilation = existValidator.getCompilationIfExist(compId);
+        Compilation compilation = getCompilationIfExist(compId);
         CompilationDto compilationDto = CompilationMapper.toCompilationDto(compilation);
 
         Map<Long, Long> views = eventService.getStats(compilation.getEvents(), false);
@@ -150,5 +150,13 @@ public class CompilationServiceImpl implements CompilationService {
 
     private void setViewsToDto(Map<Long, Long> views, CompilationDto compilationDto) {
         compilationDto.getEvents().forEach(e -> e.setViews(views.get(e.getId())));
+    }
+
+    @Override
+    public Compilation getCompilationIfExist(Long compId) {
+        Optional<Compilation> compilation = compilationRepository.findById(compId);
+
+        return compilation.orElseThrow(()
+                -> new NotFoundException(compId, Compilation.class.getSimpleName()));
     }
 }

@@ -1,11 +1,10 @@
-package ru.ewm.service.compilations.controller;
+package ru.ewm.service.compilations;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.ewm.service.compilations.CompilationService;
 import ru.ewm.service.compilations.dto.CompilationDto;
 import ru.ewm.service.compilations.dto.NewCompilationDto;
 import ru.ewm.service.compilations.dto.UpdateCompilationRequest;

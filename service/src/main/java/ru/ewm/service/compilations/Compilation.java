@@ -21,7 +21,8 @@ public class Compilation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Boolean pinned;
+    @Column(name = "is_pinned")
+    private Boolean isPinned;
     private String title;
 
     @ManyToMany

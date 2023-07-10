@@ -10,7 +10,7 @@ public class CompilationMapper {
     public static Compilation toCompilation(NewCompilationDto newCompilationDto) {
         Compilation compilation = new Compilation();
         compilation.setTitle(newCompilationDto.getTitle());
-        compilation.setPinned(newCompilationDto.getPinned());
+        compilation.setIsPinned(newCompilationDto.getPinned());
         return compilation;
     }
 
@@ -21,7 +21,7 @@ public class CompilationMapper {
                         .collect(Collectors.toList()),
 
                 compilation.getId(),
-                compilation.getPinned(),
+                compilation.getIsPinned(),
                 compilation.getTitle()
         );
     }

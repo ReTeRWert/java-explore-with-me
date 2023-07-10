@@ -10,8 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.ewm.client.StatClient;
 import ru.ewm.service.categories.Category;
+import ru.ewm.service.categories.CategoryService;
 import ru.ewm.service.events.dto.*;
+import ru.ewm.service.events.enums.EventState;
+import ru.ewm.service.events.enums.SortTypes;
+import ru.ewm.service.events.enums.StateAction;
 import ru.ewm.service.events.model.Event;
+import ru.ewm.service.events.searchParams.AdminSearchParams;
+import ru.ewm.service.events.searchParams.PublicSearchParams;
 import ru.ewm.service.exception.AccessException;
 import ru.ewm.service.exception.InvalidEventDateException;
 import ru.ewm.service.exception.InvalidOperationException;
@@ -19,10 +25,7 @@ import ru.ewm.service.exception.NotFoundException;
 import ru.ewm.service.requests.Request;
 import ru.ewm.service.requests.RequestService;
 import ru.ewm.service.users.User;
-import ru.ewm.service.util.EventState;
-import ru.ewm.service.util.ExistValidator;
-import ru.ewm.service.util.SortTypes;
-import ru.ewm.service.util.StateAction;
+import ru.ewm.service.users.UserService;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -38,21 +41,25 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final RequestService requestService;
+    private final UserService userService;
+    private final CategoryService categoryService;
     private final StatClient statClient;
-    private final ExistValidator existValidator;
 
     @Override
-    public List<FullEventDto> searchEventsByAdmin(List<Long> users,
-                                                  List<EventState> states,
-                                                  List<Long> categories,
-                                                  LocalDateTime rangeStart,
-                                                  LocalDateTime rangeEnd,
-                                                  Long from,
-                                                  Integer size) {
+    public List<FullEventDto> searchEventsByAdmin(AdminSearchParams searchParams) {
+
+        Long from = searchParams.getFrom();
+        Integer size = searchParams.getSize();
 
         int startPage = Math.toIntExact(from / size);
         Pageable pageable = PageRequest.of(startPage, size);
-        List<Event> search = eventRepository.searchEventsByAdmin(users, states, categories, rangeStart, rangeEnd, pageable);
+
+        List<Event> search = eventRepository.searchEventsByAdmin(searchParams.getUsers(),
+                searchParams.getStates(),
+                searchParams.getCategories(),
+                searchParams.getRangeStart(),
+                searchParams.getRangeEnd(),
+                pageable);
 
         List<FullEventDto> fullEvents = search.stream()
                 .map(EventMapper::toEventFullDto)
@@ -77,7 +84,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public FullEventDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest) {
-        Event updateEvent = existValidator.getEventIfExist(eventId);
+        Event updateEvent = getEventIfExist(eventId);
 
 
         if (updateEvent.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
@@ -147,8 +154,8 @@ public class EventServiceImpl implements EventService {
             throw new InvalidEventDateException("The date and time at which the event is scheduled cannot be earlier than two hours from the current moment");
         }
 
-        User initiator = existValidator.getUserIfExist(userId);
-        Category category = existValidator.getCategoryIfExist(newEventDto.getCategory());
+        User initiator = userService.getUserIfExist(userId);
+        Category category = categoryService.getCategoryIfExist(newEventDto.getCategory());
 
         Event newEvent = EventMapper.toEvent(newEventDto);
 
@@ -162,7 +169,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public FullEventDto getEventByIdForPrivate(Long userId, Long eventId) {
-        Event eventToReturn = existValidator.getEventIfExist(eventId);
+        Event eventToReturn = getEventIfExist(eventId);
 
         if (!Objects.equals(eventToReturn.getInitiator().getId(), userId)) {
             throw new NotFoundException(eventId, Event.class.getSimpleName());
@@ -183,7 +190,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public FullEventDto updateEventByIdForPrivate(Long userId, Long eventId, UpdateEventUserRequest updateEvent) {
-        Event eventToUpdate = existValidator.getEventIfExist(eventId);
+        Event eventToUpdate = getEventIfExist(eventId);
 
         if (!Objects.equals(eventToUpdate.getInitiator().getId(), userId)) {
             throw new InvalidOperationException("Event could be updated only by initiator");
@@ -213,27 +220,24 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<FullEventDto> searchEventsByPublic(String text,
-                                                   List<Long> categories,
-                                                   Boolean paid,
-                                                   LocalDateTime rangeStart,
-                                                   LocalDateTime rangeEnd,
-                                                   Boolean onlyAvailable,
-                                                   SortTypes sort,
-                                                   Long from,
-                                                   Integer size,
-                                                   String ip) {
+    public List<FullEventDto> searchEventsByPublic(PublicSearchParams searchParams) {
+
+        String text = searchParams.getText();
 
         if (text != null) {
             text = text.toLowerCase();
         }
 
-        if (rangeStart != null && rangeEnd != null && rangeStart.isAfter(rangeEnd)) {
+        if (searchParams.getRangeStart() != null && searchParams.getRangeEnd() != null
+                && searchParams.getRangeStart().isAfter(searchParams.getRangeEnd())) {
+
             throw new InvalidEventDateException("Start event cannot be after his end.");
         }
 
-        PageRequest pageable = PageRequest.of(0, size);
-        List<Event> foundEvents = eventRepository.searchEventsByPublic(text, categories, rangeStart, rangeEnd, paid, pageable);
+        PageRequest pageable = PageRequest.of(0, searchParams.getSize());
+
+        List<Event> foundEvents = eventRepository.searchEventsByPublic(text, searchParams.getCategories(),
+                searchParams.getRangeStart(), searchParams.getRangeEnd(), searchParams.getPaid(), pageable);
 
         if (foundEvents.isEmpty()) {
             return new ArrayList<>();
@@ -256,10 +260,10 @@ public class EventServiceImpl implements EventService {
         }
 
         LocalDateTime timestamp = LocalDateTime.now();
-        statClient.saveNewEndpoint("ewm-main-service", "/events", ip, timestamp);
-        foundEvents.forEach(event -> statClient.saveNewEndpoint("ewm-main-service", "/events/" + event.getId(), ip, timestamp));
+        statClient.saveNewEndpoint("ewm-main-service", "/events", searchParams.getIp(), timestamp);
+        foundEvents.forEach(event -> statClient.saveNewEndpoint("ewm-main-service", "/events/" + event.getId(), searchParams.getIp(), timestamp));
 
-        if (SortTypes.VIEWS.equals(sort)) {
+        if (SortTypes.VIEWS.equals(searchParams.getSort())) {
             return fullEventDtos.stream()
                     .sorted(Comparator.comparing(FullEventDto::getViews))
                     .collect(Collectors.toList());
@@ -273,7 +277,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public FullEventDto getEventByIdForPublic(Long eventId, HttpServletRequest request) {
-        Event event = existValidator.getEventIfExist(eventId);
+        Event event = getEventIfExist(eventId);
 
         if (!event.getState().equals(EventState.PUBLISHED)) {
             throw new NotFoundException(eventId, Event.class.getSimpleName());
@@ -307,7 +311,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (updateEventRequest.getCategory() != null) {
-            Category category = existValidator.getCategoryIfExist(updateEventRequest.getCategory());
+            Category category = categoryService.getCategoryIfExist(updateEventRequest.getCategory());
             eventToUpdate.setCategory(category);
         }
 
@@ -327,7 +331,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (updateEventRequest.getPaid() != null) {
-            eventToUpdate.setPaid(updateEventRequest.getPaid());
+            eventToUpdate.setIsPaid(updateEventRequest.getPaid());
         }
 
         if (updateEventRequest.getParticipantLimit() != null) {
@@ -335,7 +339,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (updateEventRequest.getRequestModeration() != null) {
-            eventToUpdate.setRequestModeration(updateEventRequest.getRequestModeration());
+            eventToUpdate.setIsRequestModeration(updateEventRequest.getRequestModeration());
         }
 
         if (updateEventRequest.getTitle() != null) {
@@ -399,5 +403,13 @@ public class EventServiceImpl implements EventService {
         }
 
         return views;
+    }
+
+    @Override
+    public Event getEventIfExist(Long eventId) {
+        Optional<Event> event = eventRepository.findById(eventId);
+
+        return event.orElseThrow(() ->
+                new NotFoundException(eventId, Event.class.getSimpleName()));
     }
 }

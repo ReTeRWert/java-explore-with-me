@@ -20,4 +20,6 @@ public interface RequestService {
     RequestStatusUpdateResult updateRequests(Long userId, Long eventId, RequestStatusUpdateRequest request);
 
     List<Request> findConfirmedRequests(List<Event> events);
+
+    Request getRequestIfExist(Long requestId);
 }

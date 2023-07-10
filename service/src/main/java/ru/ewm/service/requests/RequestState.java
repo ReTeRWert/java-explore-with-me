@@ -1,4 +1,4 @@
-package ru.ewm.service.util;
+package ru.ewm.service.requests;
 
 public enum RequestState {
     PENDING,

@@ -1,10 +1,9 @@
-package ru.ewm.service.events.controller;
+package ru.ewm.service.events;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.ewm.service.events.EventService;
 import ru.ewm.service.events.dto.FullEventDto;
 import ru.ewm.service.events.dto.NewEventDto;
 import ru.ewm.service.events.dto.UpdateEventUserRequest;

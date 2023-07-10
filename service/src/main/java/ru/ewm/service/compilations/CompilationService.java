@@ -18,4 +18,6 @@ public interface CompilationService {
     List<CompilationDto> getCompilations(Boolean pinned, Long from, Integer size);
 
     CompilationDto getCompilation(@PathVariable Long compId);
+
+    Compilation getCompilationIfExist(Long compId);
 }

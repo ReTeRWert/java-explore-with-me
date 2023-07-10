@@ -5,8 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.ewm.service.events.enums.StateAction;
 import ru.ewm.service.events.model.Location;
-import ru.ewm.service.util.StateAction;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
