@@ -51,7 +51,6 @@ public class Event {
     private LocalDateTime publishedOn;
 
     private Boolean isRequestModeration;
-
     @Enumerated(EnumType.STRING)
     private EventState state;
 
