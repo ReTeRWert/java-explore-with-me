@@ -4,7 +4,7 @@ import dto.EndpointHitDto;
 import dto.ViewStatsDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import ru.ewm.stats.server.exception.ValidationException;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -19,6 +19,10 @@ public class StatServiceImpl implements StatService {
 
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+
+        if (start.isAfter(end)) {
+            throw new ValidationException("Start date must be before end date.");
+        }
 
         if (uris != null) {
 
@@ -49,11 +53,10 @@ public class StatServiceImpl implements StatService {
         }
     }
 
-    @Transactional
     @Override
     public EndpointHitDto saveNewEndpoint(EndpointHitDto newEndpoint) {
         EndpointHit endpointHit = EndpointMapper.toEndpointHit(newEndpoint);
 
-        return EndpointMapper.toEndpointHitDto(endpointRepository.save(endpointHit));
+        return EndpointMapper.toEndpointHitDto(endpointRepository.saveAndFlush(endpointHit));
     }
 }
