@@ -389,14 +389,15 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const source = JSON.parse(pm.request.body.raw);\r",
-                  "const target = pm.response.json();\r",
+                  "\r",
                   "\r",
                   "pm.test(\"Ответ должен содержать статус 200 и данные в формате json\", function () {\r",
                   "    pm.response.to.have.status(200);    \r",
                   "    pm.response.to.be.withBody;\r",
                   "    pm.response.to.be.json;\r",
                   "});\r",
+                  "\r",
+                  "const target = pm.response.json();\r",
                   "\r",
                   "pm.test(\"Поле likes должно увеличить с 0 до 1\", function () {\r",
                   "    pm.expect(target.likes).equal(1);\r",
@@ -411,7 +412,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{{request_body}}",
+              "raw": "",
               "options": {
                 "raw": {
                   "language": "json"
@@ -465,12 +466,6 @@
                   "        const comment = await api.addComment(commentator.id, event.id, rnd.getComment());\r",
                   "        pm.collectionVariables.set(\"comid\", comment.id);\r",
                   "\r",
-                  "        pm.request.body.update({\r",
-                  "        mode: 'raw',\r",
-                  "        raw: JSON.stringify(rnd.getComment()),\r",
-                  "        options: { raw: { language: 'json' } }\r",
-                  "        });\r",
-                  "\r",
                   "    } catch(err) {\r",
                   "        console.error(\"Test data error\", err);\r",
                   "    }\r",
@@ -498,14 +493,14 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const source = JSON.parse(pm.request.body.raw);\r",
-                  "const target = pm.response.json();\r",
                   "\r",
                   "pm.test(\"Ответ должен содержать статус 200 и данные в формате json\", function () {\r",
                   "    pm.response.to.have.status(200);    \r",
                   "    pm.response.to.be.withBody;\r",
                   "    pm.response.to.be.json;\r",
                   "});\r",
+                  "\r",
+                  "const target = pm.response.json();\r",
                   "\r",
                   "pm.test(\"Поле dislike должно увеличиться с 0 до 1\", function () {\r",
                   "    pm.expect(target.dislikes).equal(1);\r",
@@ -518,6 +513,15 @@
           "request": {
             "method": "PATCH",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/users/:userId/comments/:comId/dislike",
               "host": [
