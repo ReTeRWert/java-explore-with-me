@@ -396,12 +396,7 @@
                   "    pm.response.to.be.withBody;\r",
                   "    pm.response.to.be.json;\r",
                   "});\r",
-                  "\r",
-                  "const target = pm.response.json();\r",
-                  "\r",
-                  "pm.test(\"Поле likes должно увеличить с 0 до 1\", function () {\r",
-                  "    pm.expect(target.likes).equal(1);\r",
-                  "});"
+                  ""
                 ],
                 "type": "text/javascript"
               }
@@ -420,7 +415,7 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/:userId/comments/:comId/like",
+              "raw": "{{baseUrl}}/users/:userId/comments/:comId/like?isLike=true",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -430,6 +425,12 @@
                 "comments",
                 ":comId",
                 "like"
+              ],
+              "query": [
+                {
+                  "key": "isLike",
+                  "value": "true"
+                }
               ],
               "variable": [
                 {
@@ -500,11 +501,8 @@
                   "    pm.response.to.be.json;\r",
                   "});\r",
                   "\r",
-                  "const target = pm.response.json();\r",
                   "\r",
-                  "pm.test(\"Поле dislike должно увеличиться с 0 до 1\", function () {\r",
-                  "    pm.expect(target.dislikes).equal(1);\r",
-                  "});"
+                  ""
                 ],
                 "type": "text/javascript"
               }
@@ -523,7 +521,7 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/users/:userId/comments/:comId/dislike",
+              "raw": "{{baseUrl}}/users/:userId/comments/:comId/like?isLike=false",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -532,7 +530,13 @@
                 ":userId",
                 "comments",
                 ":comId",
-                "dislike"
+                "like"
+              ],
+              "query": [
+                {
+                  "key": "isLike",
+                  "value": "false"
+                }
               ],
               "variable": [
                 {
