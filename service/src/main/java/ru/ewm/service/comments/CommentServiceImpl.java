@@ -2,11 +2,16 @@ package ru.ewm.service.comments;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.ewm.service.comments.dto.CommentDto;
 import ru.ewm.service.comments.dto.NewCommentDto;
 import ru.ewm.service.comments.dto.UpdateCommentDto;
+import ru.ewm.service.comments.likes.Like;
+import ru.ewm.service.comments.likes.LikeDto;
+import ru.ewm.service.comments.likes.LikeMapper;
+import ru.ewm.service.comments.likes.LikeRepository;
 import ru.ewm.service.events.EventService;
 import ru.ewm.service.events.model.Event;
 import ru.ewm.service.exception.InvalidEventDateException;
@@ -19,13 +24,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
     private final UserService userService;
     private final EventService eventService;
 
@@ -61,23 +66,26 @@ public class CommentServiceImpl implements CommentService {
             throw new InvalidEventDateException("Start cannot be after end.");
         }
 
-        PageRequest pageable = PageRequest.of(0, searchParams.getSize());
+        Pageable pageable = getPageable(searchParams.getFrom(), searchParams.getSize());
 
-        List<Comment> foundEvents = commentRepository.getCommentsWithSort(text, searchParams.getStart(), searchParams.getEnd(),
+        List<Comment> foundComments = commentRepository.getCommentsWithSort(text, searchParams.getStart(), searchParams.getEnd(),
                 searchParams.getLikes(), searchParams.getDislikes(), pageable);
 
-        if (foundEvents.isEmpty()) {
+        if (foundComments.isEmpty()) {
             return new ArrayList<>();
         }
 
-        return foundEvents.stream()
-                .map(CommentMapper::toCommentDto)
-                .collect(Collectors.toList());
+        setLikesAndDislikes(foundComments);
+
+        return CommentMapper.toCommentDto(foundComments);
     }
 
     @Override
     public CommentDto getCommentById(Long commentId) {
         Comment comment = getCommentIfExist(commentId);
+
+        setLikes(comment);
+        setDislikes(comment);
 
         return CommentMapper.toCommentDto(comment);
     }
@@ -121,23 +129,44 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto likeComment(Long userId, Long commentId) {
-        userService.getUserIfExist(userId);
+    public LikeDto likeComment(Long userId, Long commentId, Boolean newLike) {
+        User user = userService.getUserIfExist(userId);
         Comment comment = getCommentIfExist(commentId);
 
-        comment.setLikes(comment.getLikes() + 1);
+        List<Like> likes = likeRepository.findAllByUserIdIsAndCommentIdIs(userId, commentId);
 
-        return CommentMapper.toCommentDto(commentRepository.save(comment));
+        if (!likes.isEmpty()) {
+            throw new InvalidOperationException("User can't like comment twice.");
+        }
+
+        /* А если бы я вместо того, чтобы в каждом ГЕТ подгружать лайки из базы сделал вот так,
+        оно было бы лучше? Вроде так кода поменьше.
+
+        if (newLike) {
+            comment.setLikes(comment.getLikes() + 1);
+            commentRepository.save(comment);
+        } else {
+            comment.setDislikes(comment.getDislikes() + 1);
+            commentRepository.save(comment);
+        }*/
+
+        Like like = new Like();
+        like.setUser(user);
+        like.setComment(comment);
+        like.setIsLike(newLike);
+
+        return LikeMapper.toLikeDto(likeRepository.save(like));
     }
 
     @Override
-    public CommentDto dislikeComment(Long userId, Long commentId) {
-        userService.getUserIfExist(userId);
-        Comment comment = getCommentIfExist(commentId);
+    public void deleteLikeByUser(Long userId, Long commentId) {
+        List<Like> likes = likeRepository.findAllByUserIdIsAndCommentIdIs(userId, commentId);
 
-        comment.setDislikes(comment.getDislikes() + 1);
+        if (likes.size() != 1) {
+            throw new InvalidOperationException("Like not found.");
+        }
 
-        return CommentMapper.toCommentDto(commentRepository.save(comment));
+        likeRepository.deleteById(likes.get(0).getId());
     }
 
     @Override
@@ -156,26 +185,41 @@ public class CommentServiceImpl implements CommentService {
     public List<CommentDto> getCommentsByEventId(Long eventId, Long from, Integer size) {
         eventService.getEventIfExist(eventId);
 
-        PageRequest pageable = PageRequest.of(0, size);
+        List<Comment> comments = commentRepository.findAllByEventIdIsOrderByCreatedDesc(eventId, getPageable(from, size));
 
-        List<Comment> comments = commentRepository.findAllByEventIdIsOrderByCreatedDesc(eventId, pageable);
+        setLikesAndDislikes(comments);
 
-        return comments.stream()
-                .map(CommentMapper::toCommentDto)
-                .collect(Collectors.toList());
+        return CommentMapper.toCommentDto(comments);
     }
 
     @Override
     public List<CommentDto> getCommentsByUserId(Long userId, Long from, Integer size) {
         userService.getUserIfExist(userId);
 
-        PageRequest pageable = PageRequest.of(0, size);
+        List<Comment> comments = commentRepository.findAllByAuthorIdIsOrderByCreatedDesc(userId,  getPageable(from, size));
 
-        List<Comment> comments = commentRepository.findAllByAuthorIdIsOrderByCreatedDesc(userId, pageable);
+        setLikesAndDislikes(comments);
 
-        return comments.stream()
-                .map(CommentMapper::toCommentDto)
-                .collect(Collectors.toList());
+        return CommentMapper.toCommentDto(comments);
+    }
+
+    private void setLikesAndDislikes(List<Comment> comments) {
+        comments.forEach(this::setLikes);
+        comments.forEach(this::setDislikes);
+    }
+
+    private void setLikes(Comment comment) {
+        List<Like> likes = likeRepository.findAllByCommentIdIsAndIsLikeIs(comment.getId(), true);
+        comment.setLikes(likes.size());
+    }
+
+    private void setDislikes(Comment comment) {
+        List<Like> likes = likeRepository.findAllByCommentIdIsAndIsLikeIs(comment.getId(), false);
+        comment.setDislikes(likes.size());
+    }
+
+    private Pageable getPageable(Long from, Integer size) {
+        return PageRequest.of(Math.toIntExact(from), size);
     }
 
     private Comment getCommentIfExist(Long commentId) {

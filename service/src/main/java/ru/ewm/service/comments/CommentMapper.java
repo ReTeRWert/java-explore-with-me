@@ -3,6 +3,9 @@ package ru.ewm.service.comments;
 import ru.ewm.service.comments.dto.CommentDto;
 import ru.ewm.service.comments.dto.NewCommentDto;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class CommentMapper {
 
     public static Comment toComment(NewCommentDto newCommentDto) {
@@ -21,5 +24,11 @@ public class CommentMapper {
                 comment.getLikes(),
                 comment.getDislikes()
         );
+    }
+
+    public static List<CommentDto> toCommentDto(List<Comment> comments) {
+        return comments.stream()
+                .map(CommentMapper::toCommentDto)
+                .collect(Collectors.toList());
     }
 }

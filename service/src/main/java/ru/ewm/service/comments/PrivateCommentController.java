@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.ewm.service.comments.dto.CommentDto;
 import ru.ewm.service.comments.dto.NewCommentDto;
 import ru.ewm.service.comments.dto.UpdateCommentDto;
+import ru.ewm.service.comments.likes.LikeDto;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -41,19 +42,21 @@ public class PrivateCommentController {
     }
 
     @PatchMapping("/comments/{commentId}/like")
-    public CommentDto likeComment(@PathVariable Long userId,
-                                  @PathVariable Long commentId) {
+    public LikeDto likeComment(@PathVariable Long userId,
+                               @PathVariable Long commentId,
+                               @RequestParam Boolean isLike) {
         log.info("User with id: {} like comment with id: {}", userId, commentId);
 
-        return commentService.likeComment(userId, commentId);
+        return commentService.likeComment(userId, commentId, isLike);
     }
 
-    @PatchMapping("/comments/{commentId}/dislike")
-    public CommentDto dislikeComment(@PathVariable Long userId,
-                                     @PathVariable Long commentId) {
-        log.info("User with id: {} dislike comment with id: {}", userId, commentId);
+    @DeleteMapping("/comments/{commentId}/like")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLike(@PathVariable Long userId,
+                           @PathVariable Long commentId) {
+        log.info("Delete like comment with id: {} by user with id: {}", commentId, userId);
 
-        return commentService.dislikeComment(userId, commentId);
+        commentService.deleteLikeByUser(userId, commentId);
     }
 
     @DeleteMapping("/comments/{commentId}")
