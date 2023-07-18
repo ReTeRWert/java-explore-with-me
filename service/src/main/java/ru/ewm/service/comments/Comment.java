@@ -42,6 +42,9 @@ public class Comment {
     @JoinColumn(name = "event_id")
     private Event event;
 
-    private int likes;
-    private int dislikes;
+    @Transient
+    private long likes;
+
+    @Transient
+    private long dislikes;
 }

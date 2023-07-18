@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.ewm.service.comments.dto.CommentDto;
 import ru.ewm.service.comments.dto.UpdateCommentDto;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -37,8 +39,8 @@ public class AdminCommentController {
 
     @GetMapping("/user/{userId}")
     public List<CommentDto> getCommentsByUserId(@PathVariable Long userId,
-                                                @RequestParam(defaultValue = "0") Long from,
-                                                @RequestParam(defaultValue = "10") Integer size) {
+                                                @RequestParam(defaultValue = "0") @PositiveOrZero Long from,
+                                                @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("Get comments by user id: {}", userId);
 
         return commentService.getCommentsByUserId(userId, from, size);

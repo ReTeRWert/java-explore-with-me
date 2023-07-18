@@ -82,8 +82,6 @@ CREATE TABLE IF NOT EXISTS comments (
       created           TIMESTAMP WITHOUT TIME ZONE                 NOT NULL,
       author_id         BIGINT                                      NOT NULL,
       event_id          BIGINT                                      NOT NULL,
-      likes             INTEGER                                     NOT NULL,
-      dislikes          INTEGER                                     NOT NULL,
 
       CONSTRAINT pk_comments  PRIMARY KEY (id),
       CONSTRAINT fk_comments_users  FOREIGN KEY (author_id) REFERENCES users,

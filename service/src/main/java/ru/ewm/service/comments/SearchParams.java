@@ -15,8 +15,6 @@ public class SearchParams {
     private String text;
     private LocalDateTime start;
     private LocalDateTime end;
-    private Integer likes;
-    private Integer dislikes;
     private Long from;
     private Integer size;
 }

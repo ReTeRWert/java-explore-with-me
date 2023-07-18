@@ -8,10 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.ewm.service.comments.dto.CommentDto;
 import ru.ewm.service.comments.dto.NewCommentDto;
 import ru.ewm.service.comments.dto.UpdateCommentDto;
-import ru.ewm.service.comments.likes.Like;
-import ru.ewm.service.comments.likes.LikeDto;
-import ru.ewm.service.comments.likes.LikeMapper;
-import ru.ewm.service.comments.likes.LikeRepository;
+import ru.ewm.service.comments.likes.*;
 import ru.ewm.service.events.EventService;
 import ru.ewm.service.events.model.Event;
 import ru.ewm.service.exception.InvalidEventDateException;
@@ -21,9 +18,8 @@ import ru.ewm.service.users.User;
 import ru.ewm.service.users.UserService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,16 +56,12 @@ public class CommentServiceImpl implements CommentService {
             text = text.toLowerCase();
         }
 
-        if (searchParams.getStart() != null && searchParams.getEnd() != null
-                && searchParams.getStart().isAfter(searchParams.getEnd())) {
-
-            throw new InvalidEventDateException("Start cannot be after end.");
-        }
+        checkDates(searchParams.getStart(), searchParams.getEnd());
 
         Pageable pageable = getPageable(searchParams.getFrom(), searchParams.getSize());
 
-        List<Comment> foundComments = commentRepository.getCommentsWithSort(text, searchParams.getStart(), searchParams.getEnd(),
-                searchParams.getLikes(), searchParams.getDislikes(), pageable);
+        List<Comment> foundComments = commentRepository.getCommentsWithSort(text, searchParams.getStart(),
+                searchParams.getEnd(), pageable);
 
         if (foundComments.isEmpty()) {
             return new ArrayList<>();
@@ -79,6 +71,7 @@ public class CommentServiceImpl implements CommentService {
 
         return CommentMapper.toCommentDto(foundComments);
     }
+
 
     @Override
     public CommentDto getCommentById(Long commentId) {
@@ -139,17 +132,6 @@ public class CommentServiceImpl implements CommentService {
             throw new InvalidOperationException("User can't like comment twice.");
         }
 
-        /* А если бы я вместо того, чтобы в каждом ГЕТ подгружать лайки из базы сделал вот так,
-        оно было бы лучше? Вроде так кода поменьше.
-
-        if (newLike) {
-            comment.setLikes(comment.getLikes() + 1);
-            commentRepository.save(comment);
-        } else {
-            comment.setDislikes(comment.getDislikes() + 1);
-            commentRepository.save(comment);
-        }*/
-
         Like like = new Like();
         like.setUser(user);
         like.setComment(comment);
@@ -196,7 +178,7 @@ public class CommentServiceImpl implements CommentService {
     public List<CommentDto> getCommentsByUserId(Long userId, Long from, Integer size) {
         userService.getUserIfExist(userId);
 
-        List<Comment> comments = commentRepository.findAllByAuthorIdIsOrderByCreatedDesc(userId,  getPageable(from, size));
+        List<Comment> comments = commentRepository.findAllByAuthorIdIsOrderByCreatedDesc(userId, getPageable(from, size));
 
         setLikesAndDislikes(comments);
 
@@ -204,8 +186,38 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private void setLikesAndDislikes(List<Comment> comments) {
-        comments.forEach(this::setLikes);
-        comments.forEach(this::setDislikes);
+
+        List<Long> ids = comments.stream()
+                .map(Comment::getId)
+                .collect(Collectors.toList());
+
+        List<LikeForComment> likeForComments = likeRepository.findLikeForComments(ids);
+
+        if (likeForComments.isEmpty()) {
+            return;
+        }
+
+        Map<Long, Long> likeMap = new HashMap<>();
+        Map<Long, Long> dislikeMap = new HashMap<>();
+
+        for (LikeForComment like : likeForComments) {
+            if (like.getIsLike()) {
+                likeMap.put(like.getCommentId(), like.getCount());
+            } else {
+                dislikeMap.put(like.getCommentId(), like.getCount());
+            }
+        }
+
+        for (Comment comment : comments) {
+
+            if (likeMap.get(comment.getId()) != null) {
+                comment.setLikes(likeMap.get(comment.getId()));
+            }
+
+            if (dislikeMap.get(comment.getId()) != null) {
+                comment.setDislikes(dislikeMap.get(comment.getId()));
+            }
+        }
     }
 
     private void setLikes(Comment comment) {
@@ -226,5 +238,11 @@ public class CommentServiceImpl implements CommentService {
 
         return commentRepository.findById(commentId).orElseThrow(() ->
                 new NotFoundException(commentId, Comment.class.getSimpleName()));
+    }
+
+    private void checkDates(LocalDateTime start, LocalDateTime end) {
+        if (start != null && end != null && start.isAfter(end)) {
+            throw new InvalidEventDateException("Start cannot be after end.");
+        }
     }
 }

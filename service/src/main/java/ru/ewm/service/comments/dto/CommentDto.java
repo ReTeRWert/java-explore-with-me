@@ -19,6 +19,6 @@ public class CommentDto {
     private LocalDateTime created;
     private Long authorId;
     private Long eventId;
-    private Integer likes;
-    private Integer dislikes;
+    private Long likes;
+    private Long dislikes;
 }

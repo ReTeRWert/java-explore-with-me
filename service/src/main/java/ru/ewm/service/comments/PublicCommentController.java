@@ -24,8 +24,6 @@ public class PublicCommentController {
                                                 @RequestParam(required = false)
                                                 @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime start,
                                                 @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime end,
-                                                @RequestParam(required = false) Integer likes,
-                                                @RequestParam(required = false) Integer dislikes,
                                                 @RequestParam(defaultValue = "0") Long from,
                                                 @RequestParam(defaultValue = "10") Integer size) {
         log.info("Get comments.");
@@ -34,8 +32,6 @@ public class PublicCommentController {
                 text,
                 start,
                 end,
-                likes,
-                dislikes,
                 from,
                 size
         );
